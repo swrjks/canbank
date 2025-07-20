@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:phishsafe_sdk/phishsafe_sdk.dart';
 import 'package:phishsafe_sdk/route_aware_wrapper.dart';
-import 'package:phishsafe_sdk/src/integrations/gesture_wrapper.dart'; // <-- Add this import
+import 'package:phishsafe_sdk/src/integrations/gesture_wrapper.dart';
+import 'package:phishsafe_sdk/src/phishsafe_tracker_manager.dart'; // ✅ Add manager
 import 'package:dummy_bank/observer.dart';
 
 class AddLoanPage extends StatefulWidget {
   final IconData Function(String type) getIconForLoanType;
   AddLoanPage({required this.getIconForLoanType});
+
   @override
   _AddLoanPageState createState() => _AddLoanPageState();
 }
@@ -62,26 +64,13 @@ class _AddLoanPageState extends State<AddLoanPage> {
         'remaining': '₹${remaining.toStringAsFixed(2)}',
         'icon': widget.getIconForLoanType(_selectedLoanType!),
       };
+
+      // ✅ Track Loan Taken + Amount via SDK
+      PhishSafeTrackerManager().recordLoanTaken();
+      PhishSafeTrackerManager().recordTransactionAmount(principal.toString());
+
       Navigator.of(context).pop(newLoan);
     }
-  }
-
-  Widget _buildGreenButton(String label, VoidCallback onPressed) {
-    return SizedBox(
-      width: double.infinity,
-      height: 48,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.green[700],
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          elevation: 0,
-        ),
-        onPressed: onPressed,
-        child: Text(label, style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
-      ),
-    );
   }
 
   @override
@@ -178,49 +167,56 @@ class _AddLoanPageState extends State<AddLoanPage> {
                       ),
                       style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green[700]),
                     ),
-                  // Add Button (Green)
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green[700],
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        elevation: 0,
-                      ),
-                      onPressed: _addLoan,
-                      child: Text("Add", style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
+                  SizedBox(height: 24),
+                  _buildGreenButton("Add", _addLoan),
                   SizedBox(height: 12),
-                  // Cancel Button (White with green border and green text)
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: Colors.green[700]!),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        backgroundColor: Colors.white,
-                      ),
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: Text(
-                        "Cancel",
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.green[700],
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
+                  _buildCancelButton(),
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGreenButton(String label, VoidCallback onPressed) {
+    return SizedBox(
+      width: double.infinity,
+      height: 48,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.green[700],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          elevation: 0,
+        ),
+        onPressed: onPressed,
+        child: Text(label, style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
+      ),
+    );
+  }
+
+  Widget _buildCancelButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 48,
+      child: OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: Colors.green[700]!),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          backgroundColor: Colors.white,
+        ),
+        onPressed: () => Navigator.of(context).pop(),
+        child: Text(
+          "Cancel",
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.green[700],
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),

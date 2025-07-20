@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:phishsafe_sdk/phishsafe_sdk.dart';
-import 'package:phishsafe_sdk/src/phishsafe_tracker_manager.dart'; // ✅ NEW: Use tracker manager
+import 'package:phishsafe_sdk/src/phishsafe_tracker_manager.dart'; // ✅ Use tracker manager
 import 'package:phishsafe_sdk/route_aware_wrapper.dart';
 import 'package:phishsafe_sdk/src/integrations/gesture_wrapper.dart';
 import 'package:dummy_bank/observer.dart';
@@ -35,6 +35,17 @@ class _ManageDepositsPageState extends State<ManageDepositsPage> {
     },
   ];
 
+  String _formatCurrency(double amount) {
+    return '₹${amount.toStringAsFixed(2).replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]},',
+    )}';
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
   void _showPinPopup(BuildContext context, VoidCallback onSuccess) {
     showDialog(
       context: context,
@@ -42,7 +53,7 @@ class _ManageDepositsPageState extends State<ManageDepositsPage> {
       builder: (_) => PinPopup(
         onComplete: (enteredPin) {
           Navigator.pop(context); // Close popup
-          onSuccess();
+          onSuccess(); // FD update and recording happens here
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text("Fixed Deposit broken successfully."),
@@ -53,17 +64,6 @@ class _ManageDepositsPageState extends State<ManageDepositsPage> {
         },
       ),
     );
-  }
-
-  String _formatCurrency(double amount) {
-    return '₹${amount.toStringAsFixed(2).replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m[1]},',
-    )}';
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
   }
 
   @override
@@ -146,9 +146,10 @@ class _ManageDepositsPageState extends State<ManageDepositsPage> {
                               ElevatedButton(
                                 onPressed: () {
                                   _showPinPopup(context, () {
-                                    // ✅ Record FD Broken to Analytics SDK
+                                    // ✅ Record "FD Broken" only after authentication success
                                     PhishSafeTrackerManager().recordFDBroken();
 
+                                    // Update status
                                     setState(() {
                                       _fixedDeposits[index]['status'] = 'Broken';
                                     });

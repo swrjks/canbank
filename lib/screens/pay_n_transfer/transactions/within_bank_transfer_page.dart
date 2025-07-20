@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'transaction_success_page.dart';
 import 'package:dummy_bank/screens/pin_popup.dart';
 import 'package:phishsafe_sdk/phishsafe_sdk.dart';
-import 'package:phishsafe_sdk/src/phishsafe_tracker_manager.dart'; // ✅ this one
+import 'package:phishsafe_sdk/src/phishsafe_tracker_manager.dart';
 import 'package:phishsafe_sdk/route_aware_wrapper.dart';
 import 'package:phishsafe_sdk/src/integrations/gesture_wrapper.dart';
 import 'package:dummy_bank/observer.dart';
-
-
 
 class WithinBankTransferPage extends StatefulWidget {
   @override
@@ -25,14 +23,16 @@ class _WithinBankTransferPageState extends State<WithinBankTransferPage> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      // ✅ Track amount entered (this is the only new line)
-      PhishSafeTrackerManager().recordTransactionAmount(amount);
-
+      // ✅ Show PIN dialog first
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (_) => PinPopup(
           onComplete: (enteredPin) {
+            // ✅ Record transaction *only after* successful PIN confirmation
+            PhishSafeTrackerManager().recordTransactionAmount(amount);
+
+            // Proceed to success screen
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -98,7 +98,7 @@ class _WithinBankTransferPageState extends State<WithinBankTransferPage> {
                     label: "Remarks",
                     hint: "Remarks (optional)",
                     keyboardType: TextInputType.text,
-                    validator: null, // Optional
+                    validator: null,
                     onSaved: (val) => remarks = val ?? '',
                   ),
                   SizedBox(height: 24),
